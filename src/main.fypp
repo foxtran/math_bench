@@ -38,6 +38,7 @@ program main
   print "(A)", "```"
   call print_line()
   print "(A, I0)", "Number of repeats is: ", repeats
+  call print_line()
   print "(A)", "Total size of one array is ${bench.CACHE_USAGE}$Kb"
 #:for prec in bench.INTEGER_PRECISION
   call init_integer_${prec}$
