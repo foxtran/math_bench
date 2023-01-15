@@ -23,7 +23,6 @@ program main
 #:endfor
   implicit none
   integer :: repeats, max_steps
-  integer :: step, ibench
   type(benchmark_t) :: benchmarks(${bench.BENCHMARK_LEN}$)
   repeats = 100000
   max_steps = 10
@@ -63,27 +62,41 @@ program main
 #:endfor
 #:endfor
 #:endfor
-  do step = 1, max_steps
-    do ibench = 1, size(benchmarks)
-      call show_progress(step, max_steps, ibench, benchmarks)
-      call benchmarks(ibench)%run(repeats, step)
-    end do
-  end do
-  print *, repeat(" ", 256)
-  call print_line()
-  print "(A)", "| type             | test             |     N |  mean time, ms  |   sd time, ms   |   min time, ms  |   max time, ms  |"
-  print "(A)", "| :--------------- | :--------------- | ----: | :-------------: | :-------------: | :-------------: | :-------------: |"
-  do ibench = 1, size(benchmarks)
-    call benchmarks(ibench)%print_statistics()
-  end do
-  call print_line()
+  call run_benchmark(max_steps, repeats, benchmarks)
+  call print_table(benchmarks)
 contains
+  subroutine run_benchmark(max_steps, repeats, benchmarks)
+    integer,           intent(in)    :: max_steps
+    integer,           intent(in)    :: repeats
+    type(benchmark_t), intent(inout) :: benchmarks(:)
+    ! internal variables
+    integer :: step, ibench
+    do step = 1, max_steps
+      do ibench = 1, size(benchmarks)
+        call show_progress(step, max_steps, ibench, benchmarks)
+        call benchmarks(ibench)%run(repeats, step)
+      end do
+    end do
+    print *, repeat(" ", 256) ! override ourput from progress
+  end subroutine run_benchmark
   subroutine show_progress(step, max_steps, ibench, benchmarks)
     integer,           intent(in) :: step, max_steps, ibench
     type(benchmark_t), intent(in) :: benchmarks(:)
     write(6, "(A8,I5,A1,I0,A16,I4,A1,I0,A2,A)", advance="no") &
       " [ Pass ", step, "/", max_steps, " ] Running test ", ibench, "/", size(benchmarks), ": ", trim(benchmarks(ibench)%benchmark_type) // "-" // trim(benchmarks(ibench)%benchmark_name) // repeat(" ", 32) // char(13)
   end subroutine show_progress
+  subroutine print_table(benchmarks)
+    type(benchmark_t), intent(in) :: benchmarks(:)
+    ! internal variables
+    integer :: ibench
+    call print_line()
+    print "(A)", "| type             | test             |     N |  mean time, ms  |   sd time, ms   |   min time, ms  |   max time, ms  |"
+    print "(A)", "| :--------------- | :--------------- | ----: | :-------------: | :-------------: | :-------------: | :-------------: |"
+    do ibench = 1, size(benchmarks)
+      call benchmarks(ibench)%print_statistics()
+    end do
+    call print_line()
+  end subroutine print_table
   subroutine print_line()
     !print "(A)", "-----------------------------------------------------------------------------------------------------------------------"
     print *, ""

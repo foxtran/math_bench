@@ -62,7 +62,7 @@ contains
     this%statistics(step_) = ed - st
   end subroutine run
   subroutine print_statistics(this)
-    class(benchmark_t), intent(inout) :: this
+    class(benchmark_t), intent(in) :: this
     ! internal variables
     integer :: i, imax
     real(8) :: mean_vr, sd_vr, min_vr, max_vr
