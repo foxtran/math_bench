@@ -1,0 +1,90 @@
+program main
+  use, intrinsic :: iso_fortran_env, only: compiler_version, compiler_options
+  use bench, only: benchmark_t
+#:for prec in bench.INTEGER_PRECISION
+  use bench_integer_${prec}$, only: init_integer_${prec}$ => init, get_size_integer_${prec}$ => get_size, type_integer_${prec}$ => type
+#:endfor
+#:for prec in bench.REAL_PRECISION
+  use bench_real_${prec}$, only: init_real_${prec}$ => init, get_size_real_${prec}$ => get_size, type_real_${prec}$ => type
+#:endfor
+#:for prec in bench.INTEGER_PRECISION
+#:for routine_set in [bench.INTEGER_HANDS, bench.INTEGER_INTRINSICS, bench.INTEGER_INTRINSICS2]
+#:for intr in routine_set
+  use bench_integer_${prec}$, only: b_integer_${prec}$_${intr.replace('.','_')}$ => b_${intr.replace('.','_')}$
+#:endfor
+#:endfor
+#:endfor
+#:for prec in bench.REAL_PRECISION
+#:for routine_set in [bench.REAL_HANDS, bench.REAL_INTRINSICS, bench.REAL_INTRINSICS2]
+#:for intr in routine_set
+  use bench_real_${prec}$, only: b_real_${prec}$_${intr.replace('.','_')}$ => b_${intr.replace('.','_')}$
+#:endfor
+#:endfor
+#:endfor
+  implicit none
+  integer :: repeats, max_steps
+  integer :: step, ibench
+  type(benchmark_t) :: benchmarks(${bench.BENCHMARK_LEN}$)
+  repeats = 100000
+  max_steps = 10
+  call print_line()
+  print "(A)", "Benchmark was compiled using the following compiler: " 
+  print "(A)", "```"
+  print "(A)", compiler_version()
+  print "(A)", "```"
+  print "(A)", "Benchmark was compiled with the following options: "
+  print "(A)", "```"
+  print "(A)", compiler_options()
+  print "(A)", "```"
+  call print_line()
+  print "(A, I0)", "Number of repeats is: ", repeats
+  print "(A)", "Total size of one array is ${bench.CACHE_USAGE}$Kb"
+#:for prec in bench.INTEGER_PRECISION
+  call init_integer_${prec}$
+#:endfor
+#:for prec in bench.REAL_PRECISION
+  call init_real_${prec}$
+#:endfor
+#:set ID = 1
+#:for prec in bench.INTEGER_PRECISION
+#:for routine_set in [bench.INTEGER_HANDS, bench.INTEGER_INTRINSICS, bench.INTEGER_INTRINSICS2]
+#:for intr in routine_set
+  call benchmarks(${ID}$)%register(${ID}$_8, type_integer_${prec}$, "${intr}$", b_integer_${prec}$_${intr.replace('.','_')}$, max_steps)
+#:set ID = ID + 1
+#:endfor
+#:endfor
+#:endfor
+#:for prec in bench.REAL_PRECISION
+#:for routine_set in [bench.REAL_HANDS, bench.REAL_INTRINSICS, bench.REAL_INTRINSICS2]
+#:for intr in routine_set
+  call benchmarks(${ID}$)%register(${ID}$_8, type_real_${prec}$, "${intr}$", b_real_${prec}$_${intr.replace('.','_')}$, max_steps)
+#:set ID = ID + 1
+#:endfor
+#:endfor
+#:endfor
+  do step = 1, max_steps
+    do ibench = 1, size(benchmarks)
+      call show_progress(step, max_steps, ibench, benchmarks)
+      call benchmarks(ibench)%run(repeats, step)
+    end do
+  end do
+  print *, repeat(" ", 256)
+  call print_line()
+  print "(A)", "| type             | test             |     N |  mean time, ms  |   sd time, ms   |   min time, ms  |   max time, ms  |"
+  print "(A)", "| :--------------- | :--------------- | ----: | :-------------: | :-------------: | :-------------: | :-------------: |"
+  do ibench = 1, size(benchmarks)
+    call benchmarks(ibench)%print_statistics()
+  end do
+  call print_line()
+contains
+  subroutine show_progress(step, max_steps, ibench, benchmarks)
+    integer,           intent(in) :: step, max_steps, ibench
+    type(benchmark_t), intent(in) :: benchmarks(:)
+    write(6, "(A8,I5,A1,I0,A16,I4,A1,I0,A2,A)", advance="no") &
+      " [ Pass ", step, "/", max_steps, " ] Running test ", ibench, "/", size(benchmarks), ": ", trim(benchmarks(ibench)%benchmark_type) // "-" // trim(benchmarks(ibench)%benchmark_name) // repeat(" ", 32) // char(13)
+  end subroutine show_progress
+  subroutine print_line()
+    !print "(A)", "-----------------------------------------------------------------------------------------------------------------------"
+    print *, ""
+  end subroutine print_line
+end program main

@@ -1,0 +1,178 @@
+#:for prec in bench.REAL_PRECISION
+module bench_real_${prec}$
+  use, intrinsic :: iso_c_binding, only: C_sizeof
+  implicit none
+  private
+  integer,    parameter :: prec            = ${prec}$
+  real(prec), parameter :: t               = 0E0_prec
+  integer,    parameter :: BYTES_IN_REAL   = C_sizeof(t)
+  integer,    parameter :: ELEMENTS_IN_NKB = ${bench.CACHE_USAGE}$ * 1024 / BYTES_IN_REAL
+!DIR$ ATTRIBUTES ALIGN : 64 :: A, B, C
+  real(prec), dimension(ELEMENTS_IN_NKB) :: A, B, C
+  character(len=16) :: type
+  logical :: initialized = .false.
+  public :: A, B, C
+  public :: init, get_size, type
+#:for intr in bench.REAL_HANDS
+  public :: b_${intr}$
+#:endfor
+#:for intr in bench.REAL_INTRINSICS
+  public :: b_${intr}$
+#:endfor
+#:for intr in bench.REAL_INTRINSICS2
+  public :: b_${intr}$
+#:endfor
+contains
+  subroutine init
+    if (.not. initialized) then
+      A = 0E0_prec
+      call random_number(B)
+      call random_number(C)
+      write (type, "(A5,I0,A1)") "real(", prec, ")"
+    end if
+    initialized = .true.
+    call shuffle_Sattolo(B)
+    call shuffle_Sattolo(C)
+  end subroutine init
+  subroutine shuffle_Sattolo(A)
+    real(prec), intent(inout) :: A(ELEMENTS_IN_NKB)
+    real(8) :: t
+    integer :: i, j
+    real(prec) :: swap
+    i = ELEMENTS_IN_NKB
+    do i = ELEMENTS_IN_NKB, 1, -1
+      call random_number(t)
+      j = 1 + floor(dble(i) * t)
+      swap = A(i)
+      A(i) = A(j)
+      A(j) = swap
+    end do
+  end subroutine shuffle_Sattolo
+  integer function get_size()
+    get_size = size(A)
+  end function get_size
+  subroutine b_add_v1(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = A + B
+    end do
+  end subroutine b_add_v1
+  subroutine b_add_v2(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = B + C
+    end do
+  end subroutine b_add_v2
+  subroutine b_add_v3(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = B + 2.3E0_prec
+    end do
+  end subroutine b_add_v3
+  subroutine b_mul_v1(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = A * B
+    end do
+  end subroutine b_mul_v1
+  subroutine b_mul_v2(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = B * C
+    end do
+  end subroutine b_mul_v2
+  subroutine b_mul_v3(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = B * 2.3E0_prec
+    end do
+  end subroutine b_mul_v3
+  subroutine b_fma_v1(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = A * A + A
+    end do
+  end subroutine b_fma_v1
+  subroutine b_fma_v2(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = A * B + B
+    end do
+  end subroutine b_fma_v2
+  subroutine b_fma_v3(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = A * B + C
+    end do
+  end subroutine b_fma_v3
+  subroutine b_fma_v4(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = B * C + C
+    end do
+  end subroutine b_fma_v4
+  subroutine b_div_v1(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = A / B
+    end do
+  end subroutine b_div_v1
+  subroutine b_div_v2(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = B / C
+    end do
+  end subroutine b_div_v2
+  subroutine b_inv(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = 1E0_prec / B
+    end do
+  end subroutine b_inv
+  subroutine b_invsqrt_v1(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = sqrt(1E0_prec / B)
+    end do
+  end subroutine b_invsqrt_v1
+  subroutine b_invsqrt_v2(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = 1E0_prec / sqrt(B)
+    end do
+  end subroutine b_invsqrt_v2
+#:for intr in bench.REAL_INTRINSICS
+  subroutine b_${intr}$(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = ${intr}$(B)
+    end do
+  end subroutine b_${intr}$
+#:endfor
+#:for intr in bench.REAL_INTRINSICS2
+  subroutine b_${intr}$(repeats)
+    integer, intent(in) :: repeats
+    integer :: rep
+    do rep = 1, repeats
+      A = ${intr}$(B, C)
+    end do
+  end subroutine b_${intr}$
+#:endfor
+end module bench_real_${prec}$
+#:endfor
