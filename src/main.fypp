@@ -25,9 +25,9 @@ program main
   integer :: repeats, max_steps
   logical :: progress
   type(benchmark_t) :: benchmarks(${bench.BENCHMARK_LEN}$)
-  repeats = 100000
-  max_steps = 10
-  progress = .true.
+  repeats = ${bench.REPEATS}$
+  max_steps = ${bench.MAX_STEPS}$
+  progress =  ${bench.PROGRESS}$
   call print_line()
   print "(A)", "Benchmark was compiled using the following compiler: " 
   print "(A)", "```"
