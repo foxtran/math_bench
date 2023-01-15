@@ -20,6 +20,13 @@
 *.mod
 *.smod
 
+# Artifacts
+artifacts/*.f
+artifacts/*.F
+artifacts/*.f90
+artifacts/*.F90
+math_bench
+
 # Compiled Static libraries
 *.lai
 *.la
