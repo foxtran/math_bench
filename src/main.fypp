@@ -23,9 +23,11 @@ program main
 #:endfor
   implicit none
   integer :: repeats, max_steps
+  logical :: progress
   type(benchmark_t) :: benchmarks(${bench.BENCHMARK_LEN}$)
   repeats = 100000
   max_steps = 10
+  progress = .true.
   call print_line()
   print "(A)", "Benchmark was compiled using the following compiler: " 
   print "(A)", "```"
@@ -62,22 +64,23 @@ program main
 #:endfor
 #:endfor
 #:endfor
-  call run_benchmark(max_steps, repeats, benchmarks)
+  call run_benchmark(max_steps, repeats, benchmarks, progress)
   call print_table(benchmarks)
 contains
-  subroutine run_benchmark(max_steps, repeats, benchmarks)
+  subroutine run_benchmark(max_steps, repeats, benchmarks, progress)
     integer,           intent(in)    :: max_steps
     integer,           intent(in)    :: repeats
     type(benchmark_t), intent(inout) :: benchmarks(:)
+    logical,           intent(in)    :: progress
     ! internal variables
     integer :: step, ibench
     do step = 1, max_steps
       do ibench = 1, size(benchmarks)
-        call show_progress(step, max_steps, ibench, benchmarks)
+        if (progress) call show_progress(step, max_steps, ibench, benchmarks)
         call benchmarks(ibench)%run(repeats, step)
       end do
     end do
-    print *, repeat(" ", 256) ! override ourput from progress
+    if (progress) print *, repeat(" ", 256) ! override ourput from progress
   end subroutine run_benchmark
   subroutine show_progress(step, max_steps, ibench, benchmarks)
     integer,           intent(in) :: step, max_steps, ibench
