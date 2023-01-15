@@ -37,7 +37,7 @@ contains
       where (C == 0)
         C = 1
       end where
-      write (type, "(A8,I0,A1)") "integer(", prec, ")"
+      write (type, "(A3,I0)") "int", prec * 8
     end if
     initialized = .true.
     call shuffle_Sattolo(B)

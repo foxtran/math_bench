@@ -28,7 +28,7 @@ contains
       A = 0E0_prec
       call random_number(B)
       call random_number(C)
-      write (type, "(A5,I0,A1)") "real(", prec, ")"
+      write (type, "(A,I0,A1)") "real", prec * 8
     end if
     initialized = .true.
     call shuffle_Sattolo(B)
