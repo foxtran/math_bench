@@ -1,4 +1,4 @@
-INTEGER_PRECISION   = ['1', '2', '4', '8']
+INTEGER_PRECISION   = ['1', '2', '4', '8', '16']
 
 INTEGER_HANDS       = ['add_v1', 'add_v2', 'add_v3', 'mul_v1', 'mul_v2', 'mul_v3', 'fma_v1', 'fma_v2', 'fma_v3', 'fma_v4', 'div_v1', 'div_v2', 'inv_v1', 'inv_v2.1', 'inv_v2.2', 'inv_v2.3']
 INTEGER_INTRINSICS  = ['popcnt', 'poppar']
