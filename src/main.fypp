@@ -1,5 +1,5 @@
 program main
-  use, intrinsic :: iso_fortran_env, only: compiler_version, compiler_options
+  use, intrinsic :: iso_fortran_env, only: compiler_version, compiler_options, error_unit
   use bench, only: benchmark_t
 #:for prec in bench.INTEGER_PRECISION
   use bench_integer_${prec}$, only: init_integer_${prec}$ => init, get_size_integer_${prec}$ => get_size, type_integer_${prec}$ => type
@@ -80,12 +80,12 @@ contains
         call benchmarks(ibench)%run(repeats, step)
       end do
     end do
-    if (progress) print *, repeat(" ", 256) ! override ourput from progress
+    if (progress) write (error_unit, *) repeat(" ", 256) ! override output from progress
   end subroutine run_benchmark
   subroutine show_progress(step, max_steps, ibench, benchmarks)
     integer,           intent(in) :: step, max_steps, ibench
     type(benchmark_t), intent(in) :: benchmarks(:)
-    write(6, "(A8,I5,A1,I0,A16,I4,A1,I0,A2,A)", advance="no") &
+    write (error_unit, "(A8,I5,A1,I0,A16,I4,A1,I0,A2,A)", advance="no") &
       " [ Pass ", step, "/", max_steps, " ] Running test ", ibench, "/", size(benchmarks), ": ", trim(benchmarks(ibench)%benchmark_type) // "-" // trim(benchmarks(ibench)%benchmark_name) // repeat(" ", 32) // char(13)
   end subroutine show_progress
   subroutine print_table(benchmarks)
